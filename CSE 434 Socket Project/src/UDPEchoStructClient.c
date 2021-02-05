@@ -17,40 +17,59 @@ void DieWithError(const char *errorMessage) /* External error handling function 
 
 int main(int argc, char *argv[])
 {
-    int sock;                        /* Socket descriptor */
-    struct sockaddr_in echoServAddr; /* Echo server address */
-    struct sockaddr_in fromAddr;     /* Source address of echo */
-    unsigned short echoServPort;     /* Echo server port */
-    unsigned int fromSize;           /* In-out of address size for recvfrom() */
-    char *servIP;                    /* IP address of server */
-    int nBytes;              		 /* Length of received response */
+    int sock;                        // Socket descriptor
+    struct sockaddr_in echoServAddr; // Echo server address
+    struct sockaddr_in fromAddr;     // Source address of echo
+    unsigned short echoServPort;     // Echo server port
+    unsigned int fromSize;           // In-out of address size for recvfrom()
+    char *servIP;                    // IP address of server
+    int nBytes;              		 // Length of received response
 
 	struct sample example;
 
-    if (argc < 3)    /* Test for correct number of arguments */
+    if (argc < 3)    // Test for correct number of arguments
     {
         fprintf(stderr,"Usage: %s <Server IP address> <Echo Port>\n", argv[0]);
         exit(1);
     }
 
-    servIP = argv[1];           /* First arg: server IP address (dotted quad) */
-    echoServPort = atoi(argv[2]);  /* Second arg: Use given port, if any */
+    servIP = argv[1];           // First arg: server IP address (dotted quad)
+    echoServPort = atoi(argv[2]);  // Second arg: Use given port, if any
 
 	printf( "Arguments passed: server IP %s, port %d\n", servIP, echoServPort );
 
-    /* Create a datagram/UDP socket */
+    // Create a datagram/UDP socket
 
     if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         DieWithError("socket() failed");
 
-    /* Construct the server address structure */
+    // Construct the server address structure
 
-    memset(&echoServAddr, 0, sizeof(echoServAddr));    /* Zero out structure */
-    echoServAddr.sin_family = AF_INET;                 /* Internet addr family */
-    echoServAddr.sin_addr.s_addr = inet_addr(servIP);  /* Server IP address */
-    echoServAddr.sin_port   = htons(echoServPort);     /* Server port */
+    memset(&echoServAddr, 0, sizeof(echoServAddr));    // Zero out structure
+    echoServAddr.sin_family = AF_INET;                 // Internet addr family
+    echoServAddr.sin_addr.s_addr = inet_addr(servIP);  // Server IP address
+    echoServAddr.sin_port   = htons(echoServPort);     // Server port
 
-	/* Pass string back and forth between server 5 times */
+    // Display Menu
+    printf("+-----------------------------------------------+");
+    printf("|          Welcome to Instant Messenger         |");
+    printf("|    CSE 434 / Group 24 / jthollo1 / anispas    |");
+    printf("|-----------------------------------------------|");
+    printf("|            Please make a selection            |");
+    printf("|                                               |");
+    printf("|register    <contact-name> <IP-address> <port> |");
+    printf("|create      <contact-list-name>                |");
+    printf("|query-lists                                    |");
+    printf("|join        <contact-list-name> <contact-name> |");
+  //printf("|leave       <contact-list-name> <contact-name> |");
+    printf("|exit        <contact-name>                     |");
+  //printf("|im-start    <contact-list-name> <contact-name> |");
+  //printf("|im-complete <contact-list-name> <contact-name> |");
+    printf("|save        <file-name>                        |");
+    printf("+-----------------------------------------------+");
+
+    /*
+	// Pass string back and forth between server 5 times
 
 	printf( "Echoing %d iterations.\n", ITERATIONS );
 
@@ -61,12 +80,12 @@ int main(int argc, char *argv[])
 		strcpy( example.message, "Request" );
 		printf( "\nClient sending <message,n> in struct to: <%s,%d>\n", example.message, example.n );
 
-    	/* Send the struct to the server */
+    	// Send the struct to the server
 
     	if (sendto(sock, &example, sizeof(struct sample), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct sample))
        		DieWithError("sendto() sent a different number of bytes than expected");
 
-    	/* Receive a response */
+    	// Receive a response
 
    		fromSize = sizeof(fromAddr);
 
@@ -79,10 +98,11 @@ int main(int argc, char *argv[])
        			exit(1);
    		}
 
- 		printf("\nClient received message from server: ``%s''\n", example.message );    /* Print the echoed arg */
- 		printf("Client received value n from server: %d\n", example.n );    /* Print the echoed arg */
+ 		printf("\nClient received message from server: ``%s''\n", example.message );    // Print the echoed arg
+ 		printf("Client received value n from server: %d\n", example.n );    // Print the echoed arg
  
 	}
+    */
     
     close(sock);
     exit(0);
