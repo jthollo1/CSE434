@@ -36,12 +36,8 @@ void menu()
     printf("+--------------------------------------------------+\n");
 }
 
-void reg(int sock, struct sockaddr_in echoServAddr, struct regUser user)
+void reg(int sock, struct sockaddr_in echoServAddr, struct sockaddr_in fromAddr, unsigned int fromSize, int nBytes, struct regUser user)
 {
-    struct sockaddr_in fromAddr;     // Source address of echo
-    unsigned int fromSize;           // In-out of address size for recvfrom()
-    int nBytes;              		 // Length of received response
-
 	printf( "\nClient sending <%s,%s,%d>\n", user.name, user.IP, user.port);
 
 	// Send the struct to the server
@@ -90,10 +86,13 @@ void save(char *fileName)
 
 int main(int argc, char *argv[])
 {
-	int sock;                        // Socket descriptor
-    struct sockaddr_in echoServAddr; // Echo server address
-    unsigned short echoServPort;     // Echo server port
-    char *servIP;                    // IP address of server
+    int sock;                        /* Socket descriptor */
+    struct sockaddr_in echoServAddr; /* Echo server address */
+    struct sockaddr_in fromAddr;     /* Source address of echo */
+    unsigned short echoServPort;     /* Echo server port */
+    unsigned int fromSize;           /* In-out of address size for recvfrom() */
+    char *servIP;                    /* IP address of server */
+    int nBytes;              		 /* Length of received response */
 
     int selection;
 
@@ -143,7 +142,7 @@ int main(int argc, char *argv[])
 			scanf("%d", &user.port);
 			user.userNum = 0;
 
-			reg(sock, echoServAddr, user);
+			reg(sock, echoServAddr, fromAddr, fromSize, nBytes, user);
 			break;
 
 		case 2:
