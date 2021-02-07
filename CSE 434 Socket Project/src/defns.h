@@ -1,5 +1,7 @@
-struct sample
+struct regUser
 {
-	char message[ 20 ];
-	int n;
+	char name[50];
+	char IP[20];
+	unsigned short port;
+	int userNum;
 };

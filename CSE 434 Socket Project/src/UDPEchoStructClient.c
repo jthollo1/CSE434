@@ -15,17 +15,90 @@ void DieWithError(const char *errorMessage) /* External error handling function 
     exit(1);
 }
 
-int main(int argc, char *argv[])
+void menu()
 {
-    int sock;                        // Socket descriptor
-    struct sockaddr_in echoServAddr; // Echo server address
+    // Display Menu
+    printf("+--------------------------------------------------+\n");
+    printf("|            Welcome to Instant Messenger          |\n");
+    printf("|      CSE 434 / Group 24 / jthollo1 / anispas     |\n");
+    printf("|--------------------------------------------------|\n");
+    printf("|  Please make a selection by typing in its number |\n");
+    printf("|                                                  |\n");
+    printf("|1. register    <contact-name> <IP-address> <port> |\n");
+    printf("|2. create      <contact-list-name>                |\n");
+    printf("|3. query-lists                                    |\n");
+    printf("|4. join        <contact-list-name> <contact-name> |\n");
+  //printf("|5. leave       <contact-list-name> <contact-name> |\n");
+    printf("|5. exit        <contact-name>                     |\n");
+  //printf("|7. im-start    <contact-list-name> <contact-name> |\n");
+  //printf("|8. im-complete <contact-list-name> <contact-name> |\n");
+    printf("|6. save        <file-name>                        |\n");
+    printf("+--------------------------------------------------+\n");
+}
+
+void reg(int sock, struct sockaddr_in echoServAddr, struct regUser user)
+{
     struct sockaddr_in fromAddr;     // Source address of echo
-    unsigned short echoServPort;     // Echo server port
     unsigned int fromSize;           // In-out of address size for recvfrom()
-    char *servIP;                    // IP address of server
     int nBytes;              		 // Length of received response
 
-	struct sample example;
+	printf( "\nClient sending <%s,%s,%d>\n", user.name, user.IP, user.port);
+
+	// Send the struct to the server
+
+	if (sendto(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct regUser))
+   		DieWithError("sendto() sent a different number of bytes than expected");
+
+	// Receive a response
+
+	fromSize = sizeof(fromAddr);
+
+	if ((nBytes = recvfrom(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &fromAddr, &fromSize)) > sizeof(struct regUser) )
+	DieWithError("recvfrom() failed");
+
+	if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr)
+	{
+		fprintf(stderr,"Error: received a packet from unknown source.\n");
+		exit(1);
+	}
+
+	/*
+	printf("\nClient received message from server: ``%s''\n", example.message );    // Print the echoed arg
+	printf("Client received value n from server: %d\n", example.n );    // Print the echoed arg
+	*/
+}
+
+void create(char *listName)
+{
+
+}
+
+void query()
+{
+
+}
+
+void exitProc()
+{
+
+}
+
+void save(char *fileName)
+{
+
+}
+
+int main(int argc, char *argv[])
+{
+	int sock;                        // Socket descriptor
+    struct sockaddr_in echoServAddr; // Echo server address
+    unsigned short echoServPort;     // Echo server port
+    char *servIP;                    // IP address of server
+
+    int selection;
+
+    struct regUser user;
+
 
     if (argc < 3)    // Test for correct number of arguments
     {
@@ -50,23 +123,55 @@ int main(int argc, char *argv[])
     echoServAddr.sin_addr.s_addr = inet_addr(servIP);  // Server IP address
     echoServAddr.sin_port   = htons(echoServPort);     // Server port
 
-    // Display Menu
-    printf("+-----------------------------------------------+");
-    printf("|          Welcome to Instant Messenger         |");
-    printf("|    CSE 434 / Group 24 / jthollo1 / anispas    |");
-    printf("|-----------------------------------------------|");
-    printf("|            Please make a selection            |");
-    printf("|                                               |");
-    printf("|register    <contact-name> <IP-address> <port> |");
-    printf("|create      <contact-list-name>                |");
-    printf("|query-lists                                    |");
-    printf("|join        <contact-list-name> <contact-name> |");
-  //printf("|leave       <contact-list-name> <contact-name> |");
-    printf("|exit        <contact-name>                     |");
-  //printf("|im-start    <contact-list-name> <contact-name> |");
-  //printf("|im-complete <contact-list-name> <contact-name> |");
-    printf("|save        <file-name>                        |");
-    printf("+-----------------------------------------------+");
+
+    while(selection != 5)
+    {
+		menu();
+		printf("\nSelection: ");
+		scanf("%d", &selection);
+
+		switch(selection)
+		{
+		case 1:
+			printf("Selected register.\n\n");
+
+			printf("Contact name: ");
+			scanf("%s", &user.name);
+			printf("IP address: ");
+			scanf("%s", &user.IP);
+			printf("Port: ");
+			scanf("%d", &user.port);
+			user.userNum = 0;
+
+			reg(sock, echoServAddr, user);
+			break;
+
+		case 2:
+			printf("Selected create.\n\n");
+			break;
+
+		case 3:
+			printf("selected query-lists.\n\n");
+			break;
+
+		case 4:
+			printf("Selected join.\n\n");
+			break;
+
+		case 5:
+			printf("Selected exit.\n\n");
+			break;
+
+		case 6:
+			printf("Selected save.\n\n");
+			break;
+
+		default:
+			printf("That was not a valid selection.\n\n");
+			scanf("%*[^\n]");
+			break;
+		}
+    }
 
     /*
 	// Pass string back and forth between server 5 times
