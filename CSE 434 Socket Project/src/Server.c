@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
             printf("Server received register: user = %s, IP = %s, port = %hu\n", user.contactName, user.IP, user.port);
 
     		// Update return code
-    		user.returnCode = "SUCCESS";
+    		strcpy(user.returnCode, "SUCCESS");
 
             // Send received datagram back to the client
             if (sendto(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(struct regUser))
