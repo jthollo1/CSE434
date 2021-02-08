@@ -55,17 +55,23 @@ int main(int argc, char *argv[])
 
         // Block until receive message from a client
         if ((recvMsgSize = recvfrom(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0)
+        {
             DieWithError("recvfrom() failed");
+        }
+        else
+        {
+            printf("Server handling client at IP address: %s\n", inet_ntoa(echoClntAddr.sin_addr));
+            printf("Server received register: user = %s, IP = %s, port = %hu\n", user.contactName, user.IP, user.port);
 
-        printf("Server handling client at IP address: %s\n", inet_ntoa(echoClntAddr.sin_addr));
-        printf("Server receives struct: user=`%s', userNum=%d\n", user.name, user.userNum);
+    		// Update return code
+    		user.returnCode = "SUCCESS";
 
-		// strcpy( example.message, "Reply" );
-		user.userNum++;
-
-        // Send received datagram back to the client
-        if (sendto(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(struct regUser))
-            DieWithError("sendto() sent a different number of bytes than expected");
+            // Send received datagram back to the client
+            if (sendto(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(struct regUser))
+            {
+                DieWithError("sendto() sent a different number of bytes than expected");
+            }
+        }
     }
     // NOT REACHED
 }
