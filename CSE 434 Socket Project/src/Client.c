@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 
     struct regUser user;
 
-/*
+
     if (argc < 3)    // Test for correct number of arguments
     {
         fprintf(stderr,"Usage: %s <Server IP address> <Echo Port>\n", argv[0]);
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
     echoServAddr.sin_family = AF_INET;                 // Internet addr family
     echoServAddr.sin_addr.s_addr = inet_addr(servIP);  // Server IP address
     echoServAddr.sin_port   = htons(echoServPort);     // Server port
-*/
+
 
     while(1)
     {
