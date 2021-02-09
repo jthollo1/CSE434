@@ -1,38 +1,15 @@
-struct regUser
+struct dataStruct
 {
-	char contactName[50];
-	char IP[20];
-	unsigned short port;
-	char returnCode[10];
-};
+	int command;               // command code: 1 = register, 2 = create, 3 = query, 4 = join, 5 = exit, 6 = save
 
-struct createList
-{
-	char listName[50];
-	char returnCode[10];
-};
+	char listName[50];         // contact list name
+	char contactName[50];      // client contact name
+	char contactList[50][50];  // list of contact names
 
-struct queryList
-{
-	char list[50][50];
-	char returnCode[10];
-};
+	char IP[20];               // IP address
+	unsigned short port;       // port number
 
-struct joinList
-{
-	char listName[50];
-	char contactName[50];
-	char returnCode[10];
-};
+	char fileName[50];         // save file name
 
-struct exitP
-{
-	char contactName[50];
-	char returnCode[10];
-};
-
-struct saveFile
-{
-	char fileName[50];
-	char returnCode[10];
+	char returnCode[10];       // return code
 };

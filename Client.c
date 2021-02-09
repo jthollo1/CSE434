@@ -38,26 +38,74 @@ void menu()
     printf("+--------------------------------------------------+\n");
 }
 
-void reg(int sock, struct sockaddr_in echoServAddr, struct regUser user)
+struct dataStruct initStruct(struct dataStruct data)
+{
+	data.command = 0;
+
+	strcpy(data.listName, "");
+	strcpy(data.contactName, "");
+	memset(data.contactList, 0, sizeof data.contactList[0][0] * 50 * 50);
+
+	strcpy(data.IP, "");
+	data.port = 0;
+
+	strcpy(data.fileName, "");
+
+	strcpy(data.returnCode, "");
+
+	return data;
+}
+
+void sendStruct(int sock, struct sockaddr_in echoServAddr, struct dataStruct data)
 {
     struct sockaddr_in fromAddr;     // Source address of echo
     unsigned int fromSize;           // In-out of address size for recvfrom()
     int nBytes;              		 // Length of received response
 
 	// Send the struct to the server
-	if(sendto(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct regUser))
+	if(sendto(sock, &data, sizeof(struct dataStruct), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct dataStruct))
 	{
    		DieWithError("sendto() sent a different number of bytes than expected");
 	}
 	else
 	{
-		printf( "\nRegistering user <%s,%s,%d>\n", user.contactName, user.IP, user.port);
+		switch(data.command)
+		{
+		case 1:
+			printf("Registering user: %s IP: %s port: %hu\n", data.contactName, data.IP, data.port);
+			break;
+
+		case 2:
+			printf("Creating contact list named: %s\n", data.listName);
+			break;
+
+		case 3:
+			printf("Querying for contact lists\n");
+			break;
+
+		case 4:
+			printf("User %s is joining contact list named: %s\n", data.contactName, data.listName);
+			break;
+
+		case 5:
+			printf("%s is exiting\n", data.contactName);
+			break;
+
+		case 6:
+			printf("Saving file named: %s\n", data.fileName);
+			break;
+
+		default:
+			printf("Error: bad command in dataStruct");
+			exit(1);
+			break;
+		}
 	}
 
 	// Receive a response
 	fromSize = sizeof(fromAddr);
 
-	if((nBytes = recvfrom(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &fromAddr, &fromSize)) > sizeof(struct regUser))
+	if((nBytes = recvfrom(sock, &data, sizeof(struct dataStruct), 0, (struct sockaddr *) &fromAddr, &fromSize)) > sizeof(struct dataStruct))
 	{
 		DieWithError("recvfrom() failed");
 	}
@@ -68,171 +116,14 @@ void reg(int sock, struct sockaddr_in echoServAddr, struct regUser user)
 		exit(1);
 	}
 
-	printf("\nServer response: %s\n", user.returnCode); // Print the echoed arg
-}
-
-void create(int sock, struct sockaddr_in echoServAddr, struct createList create)
-{
-    struct sockaddr_in fromAddr;     // Source address of echo
-    unsigned int fromSize;           // In-out of address size for recvfrom()
-    int nBytes;              		 // Length of received response
-
-	// Send the struct to the server
-	if(sendto(sock, &create, sizeof(struct createList), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct createList))
+	if(strcmp(data.returnCode, "SUCCESS") != 0)
 	{
-   		DieWithError("sendto() sent a different number of bytes than expected");
+		printf("Server response: FAILURE\n\n");
 	}
 	else
 	{
-		printf( "\nCreating contact list <%s>\n", create.listName);
+		printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
 	}
-
-	// Receive a response
-	fromSize = sizeof(fromAddr);
-
-	if((nBytes = recvfrom(sock, &create, sizeof(struct createList), 0, (struct sockaddr *) &fromAddr, &fromSize)) > sizeof(struct createList))
-	{
-		DieWithError("recvfrom() failed");
-	}
-
-	if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr)
-	{
-		fprintf(stderr,"Error: received a packet from unknown source.\n");
-		exit(1);
-	}
-
-	printf("\nServer response: %s\n", create.returnCode); // Print the echoed arg
-}
-
-void query(int sock, struct sockaddr_in echoServAddr, struct queryList query)
-{
-    struct sockaddr_in fromAddr;     // Source address of echo
-    unsigned int fromSize;           // In-out of address size for recvfrom()
-    int nBytes;              		 // Length of received response
-
-	// Send the struct to the server
-	if(sendto(sock, &query, sizeof(struct queryList), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct queryList))
-	{
-   		DieWithError("sendto() sent a different number of bytes than expected");
-	}
-	else
-	{
-		printf( "\nQuerying for contact lists\n");
-	}
-
-	// Receive a response
-	fromSize = sizeof(fromAddr);
-
-	if((nBytes = recvfrom(sock, &query, sizeof(struct queryList), 0, (struct sockaddr *) &fromAddr, &fromSize)) > sizeof(struct queryList))
-	{
-		DieWithError("recvfrom() failed");
-	}
-
-	if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr)
-	{
-		fprintf(stderr,"Error: received a packet from unknown source.\n");
-		exit(1);
-	}
-
-	printf("\nServer response: %s\n", query.returnCode); // Print the echoed arg
-}
-
-void join(int sock, struct sockaddr_in echoServAddr, struct joinList joinL){
-    struct sockaddr_in fromAddr;     // Source address of echo
-    unsigned int fromSize;           // In-out of address size for recvfrom()
-    int nBytes;              		 // Length of received response
-
-    //Checks to see if contact is allocated correctly
-    if(sendto(sock, &joinL, sizeof(struct joinList), 0, (struct joinList *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct joinL))
-    {
-    	DieWitherror("Allocation is not allowed");
-    }
-    else
-    {
-    	printf("\nAllocation is allowable\n");
-    }
-
-	// Receive a response
-	fromSize = sizeof(fromAddr);
-
-    //Checks to see if contact exists already
-    if((nBytes = recvfrom(sock, &joinL, sizeof(struct joinList), 0, (struct sockaddr *) &fromAddr, &fromSize)) == sizeof(struct joinList))
-    {
-
-    	printf(stderr,"Error: Contact Exists and/or is already in ongoing instant messaging.\n");
-    	exit(1);
-    }
-
-    printf("\nServer response: %s\n", joinL.returnCode); // Print the echoed arg
-
-}
-
-//void leave(int sock, struct sockaddr_in echoServAddr){}
-
-void exitProg(int sock, struct sockaddr_in echoServAddr, struct exitP e)
-{
-    struct sockaddr_in fromAddr;     // Source address of echo
-    unsigned int fromSize;           // In-out of address size for recvfrom()
-    int nBytes;              		 // Length of received response
-
-	// Send the struct to the server
-	if(sendto(sock, &e, sizeof(struct exitP), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct exitP))
-	{
-   		DieWithError("sendto() sent a different number of bytes than expected");
-	}
-	else
-	{
-		printf( "\n<%s> is exiting\n", e.contactName);
-	}
-
-	// Receive a response
-	fromSize = sizeof(fromAddr);
-
-	if((nBytes = recvfrom(sock, &e, sizeof(struct exitP), 0, (struct sockaddr *) &fromAddr, &fromSize)) > sizeof(struct exitP))
-	{
-		DieWithError("recvfrom() failed");
-	}
-
-	if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr)
-	{
-		fprintf(stderr,"Error: received a packet from unknown source.\n");
-		exit(1);
-	}
-
-	printf("\nServer response: %s\n", e.returnCode); // Print the echoed arg
-}
-
-void save(int sock, struct sockaddr_in echoServAddr, struct saveFile s)
-{
-    struct sockaddr_in fromAddr;     // Source address of echo
-    unsigned int fromSize;           // In-out of address size for recvfrom()
-    int nBytes;              		 // Length of received response
-
-	// Send the struct to the server
-	if(sendto(sock, &create, sizeof(struct saveFile), 0, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct saveFile))
-	{
-   		DieWithError("sendto() sent a different number of bytes than expected");
-	}
-	else
-	{
-		printf( "\nSaving file <%s>\n", s.fileName);
-	}
-
-	// Receive a response
-	fromSize = sizeof(fromAddr);
-
-	if((nBytes = recvfrom(sock, &create, sizeof(struct saveFile), 0, (struct sockaddr *) &fromAddr, &fromSize)) > sizeof(struct saveFile))
-	{
-		DieWithError("recvfrom() failed");
-	}
-
-	if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr)
-	{
-		fprintf(stderr,"Error: received a packet from unknown source.\n");
-		exit(1);
-	}
-
-	printf("\nServer response: %s\n", s.returnCode); // Print the echoed arg
 }
 
 int main(int argc, char *argv[])
@@ -241,11 +132,8 @@ int main(int argc, char *argv[])
     struct sockaddr_in echoServAddr; // Echo server address
     unsigned short echoServPort;     // Echo server port
     char *servIP;                    // IP address of server
-
-    int selection;
-
-    struct regUser user;
-
+    int selection;                   // User menu selection
+    struct dataStruct data;          // Data structure
 
     if (argc < 3)    // Test for correct number of arguments
     {
@@ -270,47 +158,78 @@ int main(int argc, char *argv[])
     echoServAddr.sin_addr.s_addr = inet_addr(servIP);  // Server IP address
     echoServAddr.sin_port   = htons(echoServPort);     // Server port
 
-
     while(1)
     {
 		menu();
 		printf("\nSelection: ");
 		scanf("%d", &selection);
 
+		initStruct(data);
+
 		switch(selection)
 		{
-		case 1:
+		case 1: // register
 			printf("Selected register\n\n");
+			data.command = 1;
 
 			printf("Contact name: ");
-			scanf("%s", user.contactName);
+			scanf("%s", data.contactName);
 			printf("IP address: ");
-			scanf("%s", user.IP);
+			scanf("%s", data.IP);
 			printf("Port: ");
-			scanf("%hu", &user.port);
+			scanf("%hu", &data.port);
 			printf("\n");
 
-			reg(sock, echoServAddr, user);
+			sendStruct(sock, echoServAddr, data);
 			break;
 
-		case 2:
+		case 2: // create contact list
 			printf("Selected: create\n\n");
+			data.command = 2;
+
+			printf("Contact list name: ");
+			scanf("%s", data.listName);
+
+			sendStruct(sock, echoServAddr, data);
 			break;
 
-		case 3:
+		case 3: // query for contact lists
 			printf("selected: query-lists\n\n");
+			data.command = 3;
+
+			sendStruct(sock, echoServAddr, data);
 			break;
 
-		case 4:
+		case 4: // join list
 			printf("Selected: join\n\n");
+			data.command = 4;
+
+			printf("Contact list name: ");
+			scanf("%s", data.listName);
+			printf("Contact name: ");
+			scanf("%s", data.contactName);
+
+			sendStruct(sock, echoServAddr, data);
 			break;
 
-		case 5:
+		case 5: // exit messaging
 			printf("Selected: exit\n\n");
+			data.command = 5;
+
+			printf("Contact name: ");
+			scanf("%s", data.contactName);
+
+			sendStruct(sock, echoServAddr, data);
 			break;
 
-		case 6:
+		case 6: // save contacts
 			printf("Selected: save\n\n");
+			data.command = 6;
+
+			printf("File name: ");
+			scanf("%s", data.fileName);
+
+			sendStruct(sock, echoServAddr, data);
 			break;
 
 		default:
