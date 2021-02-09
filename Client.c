@@ -142,18 +142,25 @@ void join(int sock, struct sockaddr_in echoServAddr, struct joinList joinL){
     unsigned int fromSize;           // In-out of address size for recvfrom()
     int nBytes;              		 // Length of received response
 
+    //Checks to see if contact is allocated correctly
+    if(sendto(sock, &joinL, sizeof(struct joinList), 0, (struct joinList *) &echoServAddr, sizeof(echoServAddr)) != sizeof(struct joinL))
+    {
+    	DieWitherror("Allocation is not allowed");
+    }
+    else
+    {
+    	printf("\nAllocation is allowable\n");
+    }
+
 	// Receive a response
 	fromSize = sizeof(fromAddr);
 
     //Checks to see if contact exists already
-    if(sendto(sock)){
+    if((nBytes = recvfrom(sock, &joinL, sizeof(struct joinList), 0, (struct sockaddr *) &fromAddr, &fromSize)) == sizeof(struct joinList))
+    {
 
-    	printf(stderr,"Error: Contact is already in ongoing instant message.\n");
+    	printf(stderr,"Error: Contact Exists and/or is already in ongoing instant messaging.\n");
     	exit(1);
-    }
-
-    else{
-
     }
 
     printf("\nServer response: %s\n", joinL.returnCode); // Print the echoed arg
