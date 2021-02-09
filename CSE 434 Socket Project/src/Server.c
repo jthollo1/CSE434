@@ -23,8 +23,7 @@ int main(int argc, char *argv[])
     unsigned int cliAddrLen;         // Length of incoming message
     unsigned short echoServPort;     // Server port
     int recvMsgSize;                 // Size of received message
-
-    struct regUser user;
+    struct dataStruct data;          // Data structure
 
     if (argc != 2)         // Test for correct number of parameters
     {
@@ -53,21 +52,69 @@ int main(int argc, char *argv[])
         // Set the size of the in-out parameter
         cliAddrLen = sizeof(echoClntAddr);
 
-        // Block until receive message from a client
-        if ((recvMsgSize = recvfrom(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0)
+        printf("Waiting for client command...\n");
+
+        // Block until receive command from a client
+        if ((recvMsgSize = recvfrom(sock, &data, sizeof(struct dataStruct), 0, (struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0)
         {
             DieWithError("recvfrom() failed");
         }
         else
         {
-            printf("Server handling client at IP address: %s\n", inet_ntoa(echoClntAddr.sin_addr));
-            printf("Server received register: user = %s, IP = %s, port = %hu\n", user.contactName, user.IP, user.port);
+        	printf("\nServer got request from client at IP address: %s\n", inet_ntoa(echoClntAddr.sin_addr));
 
-    		// Update return code
-    		strcpy(user.returnCode, "SUCCESS");
+    		switch(data.command)
+    		{
+    		case 1: // register
+                printf("Server received register command: contactName: %s, IP: %s, port: %hu\n\n", data.contactName, data.IP, data.port);
+
+        		// Update return code
+        		strcpy(data.returnCode, "SUCCESS");
+    			break;
+
+    		case 2: // create contact list
+                printf("Server received create command: listName: %s\n\n", data.listName);
+
+        		// Update return code
+        		strcpy(data.returnCode, "SUCCESS");
+    			break;
+
+    		case 3: // query for contact lists
+    			printf("Server received query command\n\n");
+
+        		// Update return code
+        		strcpy(data.returnCode, "SUCCESS");
+    			break;
+
+    		case 4: // join list
+    			printf("Server received join command: listName: %s, contactName: %s\n\n", data.listName, data.contactName);
+
+        		// Update return code
+        		strcpy(data.returnCode, "SUCCESS");
+    			break;
+
+    		case 5: // exit messaging
+    			printf("Server received exit command: contactName: %s\n\n", data.contactName);
+
+        		// Update return code
+        		strcpy(data.returnCode, "SUCCESS");
+    			break;
+
+    		case 6: // save contacts
+    			printf("Server received save command: fileName: %s\n\n", data.fileName);
+
+        		// Update return code
+        		strcpy(data.returnCode, "SUCCESS");
+    			break;
+
+    		default:
+    			printf("Error: invalid command recieved.\n\n");
+    			scanf("%*[^\n]");
+    			break;
+    		}
 
             // Send received datagram back to the client
-            if (sendto(sock, &user, sizeof(struct regUser), 0, (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(struct regUser))
+            if (sendto(sock, &data, sizeof(struct dataStruct), 0, (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(struct dataStruct))
             {
                 DieWithError("sendto() sent a different number of bytes than expected");
             }
