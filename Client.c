@@ -137,6 +137,31 @@ void query(int sock, struct sockaddr_in echoServAddr, struct queryList query)
 	printf("\nServer response: %s\n", query.returnCode); // Print the echoed arg
 }
 
+void join(int sock, struct sockaddr_in echoServAddr, struct joinList joinL){
+    struct sockaddr_in fromAddr;     // Source address of echo
+    unsigned int fromSize;           // In-out of address size for recvfrom()
+    int nBytes;              		 // Length of received response
+
+	// Receive a response
+	fromSize = sizeof(fromAddr);
+
+    //Checks to see if contact exists already
+    if(sendto(sock)){
+
+    	printf(stderr,"Error: Contact is already in ongoing instant message.\n");
+    	exit(1);
+    }
+
+    else{
+
+    }
+
+    printf("\nServer response: %s\n", joinL.returnCode); // Print the echoed arg
+
+}
+
+//void leave(int sock, struct sockaddr_in echoServAddr){}
+
 void exitProg(int sock, struct sockaddr_in echoServAddr, struct exitP e)
 {
     struct sockaddr_in fromAddr;     // Source address of echo
