@@ -15,6 +15,8 @@ void DieWithError(const char *errorMessage) // External error handling function
     exit(1);
 }
 
+
+
 int main(int argc, char *argv[])
 {
     int sock;                        // Socket
@@ -74,27 +76,52 @@ int main(int argc, char *argv[])
 
     		case 2: // create contact list
                 printf("Server received create command: listName: %s\n\n", data.listName);
+                
+                if(data.listName == NULL)
+                {
+                	// Update return code
+                	strcpy(data.returnCode, "SUCCESS");
+                }
+                else
+                {
+                	// Update return code
+                	strcpy(data.returnCode, "FAILURE");
+                }
 
-        		// Update return code
-        		strcpy(data.returnCode, "SUCCESS");
+        		
     			break;
 
     		case 3: // query for contact lists
     			printf("Server received query command\n\n");
-
+    			if(data.contactList = NULL)
+    			{
+    							printf("No Contact Lists have been created");
+    			}
         		// Update return code
         		strcpy(data.returnCode, "SUCCESS");
     			break;
 
     		case 4: // join list
     			printf("Server received join command: listName: %s, contactName: %s\n\n", data.listName, data.contactName);
-
+    			/*
+    			if(sendto(data.contactName) == data)
+    			{
+    				
+    			} 
+    			*/
         		// Update return code
         		strcpy(data.returnCode, "SUCCESS");
     			break;
 
     		case 5: // exit messaging
     			printf("Server received exit command: contactName: %s\n\n", data.contactName);
+    			/*
+    			if(sendto(&data.contactName) == data)
+    			{
+    				DieWithError("Client doesn't exist");
+    				
+    			} 
+    			*/
 
         		// Update return code
         		strcpy(data.returnCode, "SUCCESS");
@@ -102,6 +129,12 @@ int main(int argc, char *argv[])
 
     		case 6: // save contacts
     			printf("Server received save command: fileName: %s\n\n", data.fileName);
+    			/*
+    			if(sendto(&data.contactName) == data)
+    			{
+    				
+    			} 
+    			*/
 
         		// Update return code
         		strcpy(data.returnCode, "SUCCESS");
