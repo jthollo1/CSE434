@@ -13,3 +13,32 @@ struct dataStruct
 
 	char returnCode[10];       // return code
 };
+
+struct foundUser
+{
+	char contactName[50];      // client contact name
+	char IP[20];               // IP address
+	unsigned short port;       // port number
+	int index;                 // index user was found
+	int found;                 // found variable
+};
+
+struct user
+{
+	char contactName[50];      // client contact name
+	char IP[20];               // IP address
+	unsigned short port;       // port number
+};
+
+struct cList
+{
+	char listName[50];
+	struct user userList[50];
+	int size;
+};
+
+struct foundContact
+{
+	int index;
+	int found;
+};
