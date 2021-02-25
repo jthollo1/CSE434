@@ -326,15 +326,40 @@ int main(int argc, char *argv[])
     				    else
     				    {
     				    	user = searchUser(contactList[contact.index].userList, contactList[contact.index].size, data.contactName);
-    				    	if(user == 1)
+    				    	if(user.found == 1)
     				    	{
-    				    		printf("%s was removed from the %s contact list.\n", data.contactName, contactList[i].listName);
+    				    		
+    				    		// Remove user from list
+    				    		strcpy(contactList[contact.index].userList[user.index].contactName, "");
+    				    		strcpy(contactList[contact.index].userList[user.index].IP, "");
+    				    		contactList[contact.index].userList[user.index].port = 0;
+    				    		printf("%s was removed from the %s contact list.\n", data.contactName, contactList[contact.index].listName);
+    				    		// Rebuild list
+    				    		if(contactList[contact.index].size - user.index > 1)
+    				    		{
+    				    			for(int j = user.index; j < contactList[contact.index].size-1; j++)
+    				    		    {
+    				    			 // Copy user left 1
+    				    		     strcpy(contactList[contact.index].userList[j].contactName, contactList[contact.index].userList[j+1].contactName);
+    				    		     strcpy(contactList[contact.index].userList[j].IP, contactList[contact.index].userList[j+1].IP);
+    				    		     contactList[contact.index].userList[j].port = contactList[contact.index].userList[j+1].port;
+
+    				    		     // Delete original user
+    				    		     strcpy(contactList[contact.index].userList[j+1].contactName, "");
+    				    		     strcpy(contactList[contact.index].userList[j+1].IP, "");
+    				    		     contactList[contact.index].userList[j+1].port = 0;
+    				    		     }
+    				    		}
+
+    				    		contactList[contact.index].size--; // Removed contact
+    				    		printf("%s contact list size updated to: %d\n\n", contactList[contact.index].listName, contactList[contact.index].size);
+    				    		
     				    		//Update return code
     				    		strcpy(data.returnCode, "SUCCESS");
     				    	}
     				    	else
     				    	{
-    				    		printf("Error: User has already left list \n\n");
+    				    		printf("Error: User is not on the list. \n\n");
     				    		//Update return code
     				    		strcpy(data.returnCode, "FAILURE");
     				    	}

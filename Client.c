@@ -310,7 +310,7 @@ int main(int argc, char *argv[])
 			break;
 			
 		case 6: //im-start messaging
-			printf("Selected: leave\n\n");
+			printf("Selected: im-start\n\n");
 			data.command = 6;
 
 			printf("Contact list name: ");
@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
 			break;
 			
 		case 7: //im messaging complete
-			printf("Selected: leave\n\n");
+			printf("Selected: im-complete\n\n");
 			data.command = 7;
 
 			printf("Contact list name: ");
