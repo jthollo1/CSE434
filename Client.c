@@ -104,7 +104,7 @@ struct dataStruct sendStruct(int sock, struct sockaddr_in echoServAddr, struct d
 			break;
 			
 		case 7:
-			printf("%s is leaving an im with %s contact list.\n", data.contactName, data.listName);
+			printf("%s is completing an im with %s contact list.\n", data.contactName, data.listName);
 			break;
 			
 		case 8:
@@ -141,6 +141,8 @@ struct dataStruct sendStruct(int sock, struct sockaddr_in echoServAddr, struct d
 
 	return data;
 }
+
+//function for successful im-start
 
 int main(int argc, char *argv[])
 {

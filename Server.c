@@ -480,11 +480,60 @@ int main(int argc, char *argv[])
     			
     		case 6: //im-start
     			printf("Server recieved im-start command. \n\n");
-    			printf("Error \n\n");
-    			strcpy(data.returnCode, "FAILURE");
+    			if(listNum > 0 && userNum > 0)
+    			{
+    			  user = searchUser(userList, userNum, data.contactName);
+    			  contact = searchList(contactList, listNum, data.listName);
+    			  
+    			  if(user.found == 1 && contact.found == 1)
+    			  {
+    				  size = contactList[contact.index].size;
+    				  //checking to see if list is empty
+    				  if(size == 0)
+    				  {
+    					  printf("Error: No users in the contact lists registered.\n\n");
+    				      // Update return code
+    				      strcpy(data.returnCode, "FAILURE");
+    				  }
+    				  else if(size == 1)
+    				  {
+    					  printf("Error: Only 1 user in the contact lists registered.\n\n");
+    					  strcpy(data.returnCode, "FAILURE");
+    					  
+    				  }
+    				  else
+    				  {
+    					  user = searchUser(contactList[contact.index].userList, contactList[contact.index].size, data.contactName);
+    					  /*
+    					   *  Further code to be added 
+    					   *  strcpy(data.returnCode, "SUCCESS");
+    					   */
+    					  strcpy(data.returnCode, "FAILURE");
+    				  }
+    			  }
+    			  else
+    			  {
+    				  printf("Error: Contact name or contact list not found.\n\n");
+    				  
+    				  // Update return code
+    				  strcpy(data.returnCode, "FAILURE");
+    			  }
+    			}
+    			else
+    			{
+    				printf("Error: No users registered.\n\n");
+
+    				// Update return code
+    				strcpy(data.returnCode, "FAILURE"); 				
+    			}
+    			
     			break;
     			
     		case 7: //im-complete
+    			/*
+    			 * Somehow, we need to be able to check to see if the im-start command was activated
+    			 * If it was not activated, then, this commands returns a failure. 
+    			 */
     			printf("Server recieved im-complete command. \n\n");
     			printf("Error \n\n");
     			strcpy(data.returnCode, "FAILURE");
