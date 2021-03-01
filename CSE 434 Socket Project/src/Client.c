@@ -32,11 +32,11 @@ void menu()
     printf("|1. create:      Create new contact list           |\n");
     printf("|2. query-lists: Search for contact lists to join  |\n");
     printf("|3. join:        Join a contact list               |\n");
-  //printf("|4. leave       <contact-list-name> <contact-name> |\n");
-    printf("|4. exit:        Exit Instant Messenger            |\n");
-  //printf("|6. im-start    <contact-list-name> <contact-name> |\n");
-  //printf("|7. im-complete <contact-list-name> <contact-name> |\n");
-    printf("|5. save:        Save contact info                 |\n");
+    printf("|4. leave        Leave a contact list              |\n");
+    printf("|5. exit:        Exit Instant Messenger            |\n");
+    printf("|6. im-start     Start an instant message          |\n");
+    printf("|7. im-complete  Completed the instant message     |\n");
+    printf("|8. save:        Save contact info                 |\n");
     printf("+--------------------------------------------------+\n");
 }
 
@@ -47,7 +47,7 @@ struct dataStruct initStruct(struct dataStruct data)
 
 	strcpy(data.listName, "");
 	strcpy(data.contactName, "");
-	memset(data.contactList, 0, sizeof data.contactList[0][0] * 50 * 50);
+	memset(data.contactLists, 0, sizeof data.contactLists[0][0] * 50 * 50);
 
 	strcpy(data.IP, "");
 	data.port = 0;
@@ -92,10 +92,22 @@ struct dataStruct sendStruct(int sock, struct sockaddr_in echoServAddr, struct d
 			break;
 
 		case 4:
-			printf("%s is exiting.\n", data.contactName);
+			printf("%s is leaving the %s contact list.\n", data.contactName, data.listName);
 			break;
 
 		case 5:
+			printf("%s is exiting.\n", data.contactName);
+			break;
+
+		case 6:
+			printf("%s is starting an IM on the %s contact list.\n", data.contactName, data.listName);
+			break;
+
+		case 7:
+			printf("%s has completed an IM on the %s contact list.\n", data.contactName, data.listName);
+			break;
+
+		case 8:
 			printf("Saving file named: %s\n", data.fileName);
 			break;
 
@@ -192,12 +204,12 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
-						while(data.port < 13000 || data.port > 13500)
+						while(data.port < 13001|| data.port > 13499)
 						{
 							printf("Port: ");
 							scanf("%hu", &data.port);
 
-							if(data.port < 13000 || data.port > 13500)
+							if(data.port < 13001 || data.port > 13499)
 							{
 								printf("Error: Port must be between 13000 and 13500.\n\n");
 								scanf("%*[^\n]"); // clear scanf
@@ -254,7 +266,7 @@ int main(int argc, char *argv[])
 
 				for(int i = 0; i < listCount; i++)
 				{
-					printf("%d: %s\n", i + 1, data.contactList[i]);
+					printf("%d: %s\n", i + 1, data.contactLists[i]);
 				}
 				printf("\n");
 			}
@@ -271,9 +283,20 @@ int main(int argc, char *argv[])
 			sendStruct(sock, echoServAddr, data);
 			break;
 
-		case 4: // exit messaging
-			printf("Selected: exit\n\n");
+		case 4: // leave list
+			printf("Selected: leave\n\n");
 			data.command = 4;
+
+			printf("Contact list name: ");
+			scanf("%s", data.listName);
+			strcpy(data.contactName, clientName); // Using client bound name
+
+			sendStruct(sock, echoServAddr, data);
+			break;
+
+		case 5: // exit messaging
+			printf("Selected: exit\n\n");
+			data.command = 5;
 
 			strcpy(data.contactName, clientName); // Using client bound name
 
@@ -286,9 +309,41 @@ int main(int argc, char *argv[])
 
 			break;
 
-		case 5: // save contacts
+		case 6: // start IM
+			printf("Selected: im-start\n\n");
+			data.command = 6;
+
+			printf("Contact list name: ");
+			scanf("%s", data.listName);
+			strcpy(data.contactName, clientName); // Using client bound name
+
+			data = sendStruct(sock, echoServAddr, data);
+
+			if(strcmp(data.returnCode, "SUCCESS") != 0 && strcmp(data.returnCode, "FAILURE") != 0)
+			{
+				int listCount = atoi(data.returnCode);
+
+				for(int i = 0; i < listCount; i++)
+				{
+					printf("%d: %s   %s   %d\n", i + 1, data.userList[i].contactName, data.userList[i].IP, data.userList[i].port);
+				}
+				printf("\n");
+			}
+			break;
+
+		case 7: // complete IM
+			data.command = 7;
+
+			printf("Contact list name: ");
+			scanf("%s", data.listName);
+			strcpy(data.contactName, clientName); // Using client bound name
+
+			sendStruct(sock, echoServAddr, data);
+			break;
+
+		case 8: // save contacts
 			printf("Selected: save\n\n");
-			data.command = 5;
+			data.command = 8;
 
 			printf("File name: ");
 			scanf("%s", data.fileName);

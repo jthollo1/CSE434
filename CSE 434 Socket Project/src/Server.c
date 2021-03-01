@@ -107,6 +107,10 @@ int main(int argc, char *argv[])
     {
         DieWithError("bind() failed");
     }
+    else
+    {
+    	printf("Server bound to local IP address: %s, port: %d\n", inet_ntoa(echoServAddr.sin_addr), echoServPort);
+    }
   
     for (;;) // Run forever
     {
@@ -211,7 +215,7 @@ int main(int argc, char *argv[])
     				// Gathering contact lists
     				for(int i = 0; i < listNum; i++)
     				{
-    					strcpy(data.contactList[i], contactList[i].listName);
+    					strcpy(data.contactLists[i], contactList[i].listName);
     				}
 
     				// Converting listNum to string for return code
@@ -264,7 +268,7 @@ int main(int argc, char *argv[])
 							// Checking if user already exists in the contact list
 							if(user.found == 0)
 							{
-								//If user was not in the list, its data must be collected from the register
+								// If user was not in the list, its data must be collected from the register
 								user = searchUser(userList, userNum, data.contactName);
 
 								strcpy(contactList[contact.index].userList[size].contactName, user.contactName);
@@ -304,7 +308,92 @@ int main(int argc, char *argv[])
 
     			break;
 
-    		case 4: // exit messaging
+    		case 4: // leave list
+    			printf("Server received leave command. listName: %s, contactName: %s\n\n", data.listName, data.contactName);
+
+    			// Checking if there's both a user and contact list
+				if(listNum > 0 && userNum > 0)
+				{
+					user = searchUser(userList, userNum, data.contactName);
+					contact = searchList(contactList, listNum, data.listName);
+
+					// Checking if user name and contact name exist
+					if(user.found == 1 && contact.found == 1)
+					{
+						size = contactList[contact.index].size;
+
+						// Checking if list is empty
+						if(size > 0)
+						{
+							// Searching for user in specified contact list
+							user = searchUser(contactList[contact.index].userList, contactList[contact.index].size, data.contactName);
+
+							// Checking if user exists in the contact list
+							if(user.found == 1)
+							{
+            					// Delete user
+            					strcpy(contactList[contact.index].userList[user.index].contactName, "");
+            					strcpy(contactList[contact.index].userList[user.index].IP, "");
+            					contactList[contact.index].userList[user.index].port = 0;
+
+            					// Rebuild list
+            					if(contactList[contact.index].size - user.index > 1)
+            					{
+            						for(int i = user.index; i < contactList[contact.index].size-1; i++)
+            						{
+            							// Copy user left 1
+                    					strcpy(contactList[contact.index].userList[i].contactName, contactList[contact.index].userList[i+1].contactName);
+                    					strcpy(contactList[contact.index].userList[i].IP, contactList[contact.index].userList[i+1].IP);
+                    					contactList[contact.index].userList[i].port = contactList[contact.index].userList[i+1].port;
+
+                    					// Delete original user
+                    					strcpy(contactList[contact.index].userList[i+1].contactName, "");
+                    					strcpy(contactList[contact.index].userList[i+1].IP, "");
+                    					contactList[contact.index].userList[i+1].port = 0;
+            						}
+            					}
+
+            					contactList[contact.index].size--; // Removed contact
+            					printf("%s contact list size updated to: %d\n\n", contactList[contact.index].listName, contactList[contact.index].size);
+
+								// Update return code
+								strcpy(data.returnCode, "SUCCESS");
+							}
+							else
+							{
+								printf("Error: %s is not on the %s contact list.\n\n", data.contactName, data.listName);
+
+								// Update return code
+								strcpy(data.returnCode, "FAILURE");
+							}
+						}
+						else
+						{
+		    				printf("Error: The %s contact list is empty.\n\n", data.listName);
+
+		            		// Update return code
+		            		strcpy(data.returnCode, "FAILURE");
+						}
+					}
+					else
+					{
+						printf("Error: Contact name or contact list not found.\n\n");
+
+						// Update return code
+						strcpy(data.returnCode, "FAILURE");
+					}
+				}
+				else
+				{
+					printf("Error: No users or contact lists registered.\n\n");
+
+					// Update return code
+					strcpy(data.returnCode, "FAILURE");
+				}
+
+    			break;
+
+    		case 5: // exit messaging
     			printf("Server received exit command. contactName: %s\n\n", data.contactName);
 
     			// Checking if there's a user to remove
@@ -400,7 +489,83 @@ int main(int argc, char *argv[])
 
     			break;
 
-    		case 5: // save contacts
+    		case 6: // start instant message
+    			printf("Server received im-start command. listName: %s, contactName: %s\n\n", data.listName, data.contactName);
+
+    			// Checking if there's both a user and contact list
+				if(listNum > 0 && userNum > 0)
+				{
+					user = searchUser(userList, userNum, data.contactName);
+					contact = searchList(contactList, listNum, data.listName);
+
+					// Checking if user name and contact name exist
+					if(user.found == 1 && contact.found == 1)
+					{
+						size = contactList[contact.index].size;
+
+						// Checking if list is empty
+						if(size > 0)
+						{
+							// Searching for user in specified contact list
+							user = searchUser(contactList[contact.index].userList, contactList[contact.index].size, data.contactName);
+
+							// Checking if user exists in the contact list
+							if(user.found == 1)
+							{
+			    				// Gathering users
+			    				for(int i = 0; i < size; i++)
+			    				{
+			    					strcpy(data.userList[i].contactName, contactList[contact.index].userList[i].contactName);
+			    					strcpy(data.userList[i].IP, contactList[contact.index].userList[i].IP);
+			    					data.userList[i].port = contactList[contact.index].userList[i].port;
+			    				}
+
+			    				// Converting listNum to string for return code
+			    				sprintf(strLen, "%d", size);
+
+			            		// Update return code
+			            		strcpy(data.returnCode, strLen);
+							}
+							else
+							{
+								printf("Error: %s is not on the %s contact list.\n\n", data.contactName, data.listName);
+
+								// Update return code
+								strcpy(data.returnCode, "FAILURE");
+							}
+						}
+						else
+						{
+		    				printf("Error: The %s contact list is empty.\n\n", data.listName);
+
+		            		// Update return code
+		            		strcpy(data.returnCode, "FAILURE");
+						}
+					}
+					else
+					{
+						printf("Error: Contact name or contact list not found.\n\n");
+
+						// Update return code
+						strcpy(data.returnCode, "FAILURE");
+					}
+				}
+				else
+				{
+					printf("Error: No users or contact lists registered.\n\n");
+
+					// Update return code
+					strcpy(data.returnCode, "FAILURE");
+				}
+
+    			break;
+
+    		case 7: // complete instant message
+    			printf("Server received im-complete command. listName: %s, contactName: %s\n\n", data.listName, data.contactName);
+
+    			break;
+
+    		case 8: // save contacts
     			printf("Server received save command. fileName: %s\n\n", data.fileName);
 
 				// Build string with .txt added
