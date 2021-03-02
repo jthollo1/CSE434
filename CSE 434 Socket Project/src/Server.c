@@ -18,6 +18,15 @@ void DieWithError(const char *errorMessage) // External error handling function
     exit(1);
 }
 
+struct user initUser(struct user user)
+{
+	strcpy(user.contactName, "");
+	strcpy(user.IP, "");
+	user.port = 0;
+
+	return user;
+}
+
 // Function returns a found user
 struct foundUser searchUser(struct user userList[], int userListSize, char name[])
 {
@@ -62,19 +71,20 @@ struct foundContact searchList(struct cList contactList[], int contactListSize, 
 int main(int argc, char *argv[])
 {
 	// Declare variables
-    int sock;                        // Socket
-    struct sockaddr_in echoServAddr; // Local address
-    struct sockaddr_in echoClntAddr; // Client address
-    unsigned int cliAddrLen;         // Length of incoming message
-    unsigned short echoServPort;     // Server port
-    int recvMsgSize;                 // Size of received message
-    struct dataStruct data;          // Data structure
-	struct foundUser user;           // foundUser structure
-	struct foundContact contact;     // foundContact structure
-	int size;                        // userList size in contact list
+    int sock;                            // Socket
+    struct sockaddr_in echoServAddr;     // Local address
+    struct sockaddr_in echoClntAddr;     // Client address
+    unsigned int cliAddrLen;             // Length of incoming message
+    unsigned short echoServPort;         // Server port
+    int recvMsgSize;                     // Size of received message
+    struct dataStruct data;              // Data structure
+	struct foundUser user;               // foundUser structure
+	struct user tempUser;               // foundUser structure
+	struct foundContact contact;         // foundContact structure
+	int size;                            // userList size in contact list
 
-    struct user userList[USER_MAX];  // Array of users
-    int userNum = 0;                 // Number of users in user list
+    struct user userList[USER_MAX];      // Array of users
+    int userNum = 0;                     // Number of users in user list
 
     struct cList contactList[LIST_MAX];  // Array of contact lists
     int listNum = 0;                     // Number of contact lists in array
@@ -82,7 +92,7 @@ int main(int argc, char *argv[])
     char strLen[STRING_MAX];             // String for return code
     char fileName[STRING_MAX];           // String for file output
 
-    if (argc != 2)         // Test for correct number of parameters
+    if (argc != 2)                       // Test for correct number of parameters
     {
         fprintf(stderr,"Usage:  %s <UDP SERVER PORT>\n", argv[0]);
         exit(1);
@@ -106,10 +116,6 @@ int main(int argc, char *argv[])
     if (bind(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
     {
         DieWithError("bind() failed");
-    }
-    else
-    {
-    	printf("Server bound to local IP address: %s, port: %d\n", inet_ntoa(echoServAddr.sin_addr), echoServPort);
     }
   
     for (;;) // Run forever
@@ -323,7 +329,7 @@ int main(int argc, char *argv[])
 						size = contactList[contact.index].size;
 
 						// Checking if list is empty
-						if(size > 0)
+						if(size > 0 || size == 1)
 						{
 							// Searching for user in specified contact list
 							user = searchUser(contactList[contact.index].userList, contactList[contact.index].size, data.contactName);
@@ -369,7 +375,7 @@ int main(int argc, char *argv[])
 						}
 						else
 						{
-		    				printf("Error: The %s contact list is empty.\n\n", data.listName);
+		    				printf("Error: The %s contact list doesn't have enough contacts.\n\n", data.listName);
 
 		            		// Update return code
 		            		strcpy(data.returnCode, "FAILURE");
@@ -512,6 +518,32 @@ int main(int argc, char *argv[])
 							// Checking if user exists in the contact list
 							if(user.found == 1)
 							{
+								// Rearranging contact list so querying user is first
+								// Checking if querying user is not already first
+								if(user.index != 0)
+								{
+									printf("Rearranging the %s contact list for %s.\n\n", contactList[contact.index].listName, data.contactName);
+
+									// Clear tempUser
+									tempUser = initUser(tempUser);
+
+									// Swap whoever's first with querying user's position
+									// Save whoever's first to a temporary user
+			    					strcpy(tempUser.contactName, contactList[contact.index].userList[0].contactName);
+			    					strcpy(tempUser.IP, contactList[contact.index].userList[0].IP);
+			    					tempUser.port = contactList[contact.index].userList[0].port;
+
+			    					// Copy querying user to first spot
+			    					strcpy(contactList[contact.index].userList[0].contactName, contactList[contact.index].userList[user.index].contactName);
+			    					strcpy(contactList[contact.index].userList[0].IP, contactList[contact.index].userList[user.index].IP);
+			    					contactList[contact.index].userList[0].port = contactList[contact.index].userList[user.index].port;
+
+			    					// Copy tempUser to querying user's spot
+			    					strcpy(contactList[contact.index].userList[user.index].contactName, tempUser.contactName);
+			    					strcpy(contactList[contact.index].userList[user.index].IP, tempUser.IP);
+			    					contactList[contact.index].userList[user.index].port = tempUser.port;
+								}
+
 			    				// Gathering users
 			    				for(int i = 0; i < size; i++)
 			    				{

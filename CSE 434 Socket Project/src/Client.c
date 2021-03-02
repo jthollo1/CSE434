@@ -6,6 +6,7 @@
 #include <stdlib.h>     // for atoi() and exit()
 #include <string.h>     // for memset()
 #include <unistd.h>     // for close()
+#include <pthread.h>
 
 // Declare global constants
 const int USER_MAX = 50;
@@ -13,6 +14,15 @@ const int LIST_MAX = 50;
 const int STRING_MAX = 50;
 const int IP_MAX = 20;
 const int RET_MAX = 10;
+
+void *serverThread(void *vargp)
+{
+	while(1)
+	{
+	    sleep(1);
+	    printf("Thread running... \n");
+	}
+}
 
 void DieWithError(const char *errorMessage) /* External error handling function */
 {
@@ -146,12 +156,14 @@ int main(int argc, char *argv[])
 {
 	int sock;                        // Socket descriptor
     struct sockaddr_in echoServAddr; // Echo server address
+    //struct sockaddr_in echoClntAddr;     // Client address
     unsigned short echoServPort;     // Echo server port
     char *servIP;                    // IP address of server
     int selection;                   // User menu selection
     struct dataStruct data;          // Data structure
     char clientName[STRING_MAX];     // Name attached to client
     int exitClient;                  // Used to end process
+    pthread_t server;
 
     if (argc < 3)    // Test for correct number of arguments
     {
@@ -162,7 +174,7 @@ int main(int argc, char *argv[])
     servIP = argv[1];           // First arg: server IP address (dotted quad)
     echoServPort = atoi(argv[2]);  // Second arg: Use given port, if any
 
-	printf( "Arguments passed: server IP %s, port %d\n", servIP, echoServPort );
+	printf("Arguments passed: server IP %s, port %d\n", servIP, echoServPort);
 
     // Create a datagram/UDP socket
     if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
@@ -176,7 +188,11 @@ int main(int argc, char *argv[])
     echoServAddr.sin_addr.s_addr = inet_addr(servIP);  // Server IP address
     echoServAddr.sin_port = htons(echoServPort);       // Server port
 
+    // Initialize data structure
     data = initStruct(data);
+
+    // Start server thread
+    pthread_create(&server, NULL, serverThread, NULL);
 
     while(strcmp(data.returnCode, "") == 0)
     {
@@ -204,14 +220,14 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
-						while(data.port < 13001|| data.port > 13499)
+						while(data.port < 13000|| data.port > 13499)
 						{
 							printf("Port: ");
 							scanf("%hu", &data.port);
 
-							if(data.port < 13001 || data.port > 13499)
+							if(data.port < 13000 || data.port > 13499)
 							{
-								printf("Error: Port must be between 13000 and 13500.\n\n");
+								printf("Error: Port must be between 13000 and 13499.\n\n");
 								scanf("%*[^\n]"); // clear scanf
 							}
 						}
