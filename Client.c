@@ -6,6 +6,7 @@
 #include <stdlib.h>     // for atoi() and exit()
 #include <string.h>     // for memset()
 #include <unistd.h>     // for close()
+#include <pthread.h>
 
 // Declare global constants
 const int USER_MAX = 50;
@@ -13,6 +14,15 @@ const int LIST_MAX = 50;
 const int STRING_MAX = 50;
 const int IP_MAX = 20;
 const int RET_MAX = 10;
+
+void *serverThread(void *vargp)
+{
+	while(1)
+	{
+	    sleep(1);
+	    printf("Thread running... \n");
+	}
+}
 
 void DieWithError(const char *errorMessage) /* External error handling function */
 {
@@ -32,10 +42,10 @@ void menu()
     printf("|1. create:      Create new contact list           |\n");
     printf("|2. query-lists: Search for contact lists to join  |\n");
     printf("|3. join:        Join a contact list               |\n");
-    printf("|4. leave       <contact-list-name> <contact-name> |\n");
+    printf("|4. leave        Leave a contact list              |\n");
     printf("|5. exit:        Exit Instant Messenger            |\n");
-    printf("|6. im-start    <contact-list-name> <contact-name> |\n");
-    printf("|7. im-complete <contact-list-name> <contact-name> |\n");
+    printf("|6. im-start     Start an instant message          |\n");
+    printf("|7. im-complete  Completed the instant message     |\n");
     printf("|8. save:        Save contact info                 |\n");
     printf("+--------------------------------------------------+\n");
 }
@@ -47,7 +57,7 @@ struct dataStruct initStruct(struct dataStruct data)
 
 	strcpy(data.listName, "");
 	strcpy(data.contactName, "");
-	memset(data.contactList, 0, sizeof data.contactList[0][0] * 50 * 50);
+	memset(data.contactLists, 0, sizeof data.contactLists[0][0] * 50 * 50);
 
 	strcpy(data.IP, "");
 	data.port = 0;
@@ -98,18 +108,18 @@ struct dataStruct sendStruct(int sock, struct sockaddr_in echoServAddr, struct d
 		case 5:
 			printf("%s is exiting.\n", data.contactName);
 			break;
-			
+
 		case 6:
-			printf("%s is starting an im with %s contact list.\n", data.contactName, data.listName);
+			printf("%s is starting an IM on the %s contact list.\n", data.contactName, data.listName);
 			break;
-			
+
 		case 7:
-			printf("%s is completing an im with %s contact list.\n", data.contactName, data.listName);
+			printf("%s has completed an IM on the %s contact list.\n", data.contactName, data.listName);
 			break;
-			
+
 		case 8:
 			printf("Saving file named: %s\n", data.fileName);
-			break; 
+			break;
 
 		default:
 			printf("Error: Bad command in dataStruct.\n");
@@ -142,18 +152,18 @@ struct dataStruct sendStruct(int sock, struct sockaddr_in echoServAddr, struct d
 	return data;
 }
 
-//function for successful im-start
-
 int main(int argc, char *argv[])
 {
 	int sock;                        // Socket descriptor
     struct sockaddr_in echoServAddr; // Echo server address
+    //struct sockaddr_in echoClntAddr;     // Client address
     unsigned short echoServPort;     // Echo server port
     char *servIP;                    // IP address of server
     int selection;                   // User menu selection
     struct dataStruct data;          // Data structure
     char clientName[STRING_MAX];     // Name attached to client
     int exitClient;                  // Used to end process
+    pthread_t server;
 
     if (argc < 3)    // Test for correct number of arguments
     {
@@ -164,7 +174,7 @@ int main(int argc, char *argv[])
     servIP = argv[1];           // First arg: server IP address (dotted quad)
     echoServPort = atoi(argv[2]);  // Second arg: Use given port, if any
 
-	printf( "Arguments passed: server IP %s, port %d\n", servIP, echoServPort );
+	printf("Arguments passed: server IP %s, port %d\n", servIP, echoServPort);
 
     // Create a datagram/UDP socket
     if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
@@ -178,7 +188,11 @@ int main(int argc, char *argv[])
     echoServAddr.sin_addr.s_addr = inet_addr(servIP);  // Server IP address
     echoServAddr.sin_port = htons(echoServPort);       // Server port
 
+    // Initialize data structure
     data = initStruct(data);
+
+    // Start server thread
+    pthread_create(&server, NULL, serverThread, NULL);
 
     while(strcmp(data.returnCode, "") == 0)
     {
@@ -206,14 +220,14 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
-						while(data.port < 13000 || data.port > 13500)
+						while(data.port < 13000|| data.port > 13499)
 						{
 							printf("Port: ");
 							scanf("%hu", &data.port);
 
-							if(data.port < 13000 || data.port > 13500)
+							if(data.port < 13000 || data.port > 13499)
 							{
-								printf("Error: Port must be between 13000 and 13500.\n\n");
+								printf("Error: Port must be between 13000 and 13499.\n\n");
 								scanf("%*[^\n]"); // clear scanf
 							}
 						}
@@ -268,7 +282,7 @@ int main(int argc, char *argv[])
 
 				for(int i = 0; i < listCount; i++)
 				{
-					printf("%d: %s\n", i + 1, data.contactList[i]);
+					printf("%d: %s\n", i + 1, data.contactLists[i]);
 				}
 				printf("\n");
 			}
@@ -284,7 +298,7 @@ int main(int argc, char *argv[])
 
 			sendStruct(sock, echoServAddr, data);
 			break;
-			
+
 		case 4: // leave list
 			printf("Selected: leave\n\n");
 			data.command = 4;
@@ -310,8 +324,8 @@ int main(int argc, char *argv[])
 			}
 
 			break;
-			
-		case 6: //im-start messaging
+
+		case 6: // start IM
 			printf("Selected: im-start\n\n");
 			data.command = 6;
 
@@ -319,11 +333,21 @@ int main(int argc, char *argv[])
 			scanf("%s", data.listName);
 			strcpy(data.contactName, clientName); // Using client bound name
 
-			sendStruct(sock, echoServAddr, data);
+			data = sendStruct(sock, echoServAddr, data);
+
+			if(strcmp(data.returnCode, "SUCCESS") != 0 && strcmp(data.returnCode, "FAILURE") != 0)
+			{
+				int listCount = atoi(data.returnCode);
+
+				for(int i = 0; i < listCount; i++)
+				{
+					printf("%d: %s   %s   %d\n", i + 1, data.userList[i].contactName, data.userList[i].IP, data.userList[i].port);
+				}
+				printf("\n");
+			}
 			break;
-			
-		case 7: //im messaging complete
-			printf("Selected: im-complete\n\n");
+
+		case 7: // complete IM
 			data.command = 7;
 
 			printf("Contact list name: ");
@@ -332,7 +356,7 @@ int main(int argc, char *argv[])
 
 			sendStruct(sock, echoServAddr, data);
 			break;
-			
+
 		case 8: // save contacts
 			printf("Selected: save\n\n");
 			data.command = 8;
@@ -353,4 +377,3 @@ int main(int argc, char *argv[])
     close(sock);
     exit(0);
 }
-
