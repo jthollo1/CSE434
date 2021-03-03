@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
     		switch(data.command) // switching on command sent from client
     		{
     		case 0: // register user
-                printf("Server received register command. contactName: %s, IP: %s, port: %hu\n\n", data.contactName, data.IP, data.port);
+                printf("Server received register command. contactName: %s, IP: %s, port: %hu\n\n", data.contactName, inet_ntoa(echoClntAddr.sin_addr), data.port);
 
                 // Checking for max users
                 if(userNum < USER_MAX)
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
                 	{
                 		// assign new user using current userNum
                     	strcpy(userList[userNum].contactName, data.contactName);
-                    	strcpy(userList[userNum].IP, data.IP);
+                    	strcpy(userList[userNum].IP, inet_ntoa(echoClntAddr.sin_addr));
                         userList[userNum].port = data.port;
 
                         userNum++; // added new user
@@ -509,8 +509,8 @@ int main(int argc, char *argv[])
 					{
 						size = contactList[contact.index].size;
 
-						// Checking if list is empty
-						if(size > 0)
+						// Checking if list has more than 1 user
+						if(size > 1)
 						{
 							// Searching for user in specified contact list
 							user = searchUser(contactList[contact.index].userList, contactList[contact.index].size, data.contactName);
@@ -568,7 +568,7 @@ int main(int argc, char *argv[])
 						}
 						else
 						{
-		    				printf("Error: The %s contact list is empty.\n\n", data.listName);
+		    				printf("Error: The %s contact list doesn't have enough contacts. \n\n", data.listName);
 
 		            		// Update return code
 		            		strcpy(data.returnCode, "FAILURE");
