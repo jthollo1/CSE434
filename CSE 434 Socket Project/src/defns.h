@@ -10,6 +10,7 @@ struct cList
 	char listName[50];         // contact list name
 	struct user userList[50];  // list of users
 	int size;                  // contact list size
+	int im_running;            // IM running flag
 };
 
 struct serverStruct

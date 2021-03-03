@@ -40,8 +40,7 @@ void menu()
     printf("|4. leave        Leave a contact list              |\n");
     printf("|5. exit:        Exit Instant Messenger            |\n");
     printf("|6. im-start     Start an instant message          |\n");
-    printf("|7. im-complete  Completed the instant message     |\n");
-    printf("|8. save:        Save contact info                 |\n");
+    printf("|7. save:        Save contact info                 |\n");
     printf("+--------------------------------------------------+\n\n");
 }
 
@@ -110,11 +109,10 @@ struct dataStruct sendStruct(int sock, struct sockaddr_in echoServAddr, struct d
 			break;
 
 		case 7:
-			printf("%s has completed an IM on the %s contact list.\n", data.contactName, data.listName);
+			printf("Saving file named: %s\n", data.fileName);
 			break;
 
 		case 8:
-			printf("Saving file named: %s\n", data.fileName);
 			break;
 
 		default:
@@ -142,8 +140,6 @@ struct dataStruct sendStruct(int sock, struct sockaddr_in echoServAddr, struct d
 	{
 		strcpy(data.returnCode, "FAILURE");
 	}
-
-	printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
 
 	return data;
 }
@@ -248,10 +244,12 @@ void *serverThread(void* arguments)
         	// Only print message if it's not at the sender
         	if(msg.size > 0)
         	{
-            	printf("\n\nNew message from %s:\n", msg.userList[msg.size-1].contactName);
+        		printf("\33[2K"); // Clear current line
+        		printf("\r");     // Return cursor
+            	printf("New message from %s:\n", msg.userList[msg.size-1].contactName);
             	printf("%s\n", msg.message);
             	printf("%s", lastPrint);
-            	fflush(stdout); // Flush output for newline
+            	fflush(stdout);   // Flush output for newline
 
     			// Rearranging next contact list
     			// Save first user on list
@@ -334,6 +332,7 @@ int main(int argc, char *argv[])
     struct msgStruct msg;            // Message structure
     struct user nextUser;            // foundUser structure
     char clientName[STRING_MAX];     // Name attached to client
+    char listName[STRING_MAX];       // Name attached to contact lists
     int exitClient;                  // Used to end process
     pthread_t server;
 
@@ -420,7 +419,7 @@ int main(int argc, char *argv[])
 		strcpy(lastPrint, "Selection: ");
 		scanf("%d", &selection);
 
-		data = initStruct(data);
+		data = initStruct(data); // clear data
 
 		switch(selection)
 		{
@@ -432,19 +431,24 @@ int main(int argc, char *argv[])
 			strcpy(lastPrint, "Contact list name: ");
 			scanf("%s", data.listName);
 
-			sendStruct(sock, echoServAddr, data);
+			data = sendStruct(sock, echoServAddr, data); // send to server and save
+			printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
+
 			break;
 
 		case 2: // query for contact lists
 			printf("selected: query-lists\n\n");
 			data.command = 2;
 
-			data = sendStruct(sock, echoServAddr, data);
+			data = sendStruct(sock, echoServAddr, data); // send to server and save
+			printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
 
-			if(strcmp(data.returnCode, "SUCCESS") != 0 && strcmp(data.returnCode, "FAILURE") != 0)
+			// Check if the return code is a number
+			if(strcmp(data.returnCode, "FAILURE") != 0)
 			{
 				int listCount = atoi(data.returnCode);
 
+				// Print contact lists
 				for(int i = 0; i < listCount; i++)
 				{
 					printf("%d: %s\n", i + 1, data.contactLists[i]);
@@ -462,7 +466,9 @@ int main(int argc, char *argv[])
 			scanf("%s", data.listName);
 			strcpy(data.contactName, clientName); // Using client bound name
 
-			sendStruct(sock, echoServAddr, data);
+			data = sendStruct(sock, echoServAddr, data); // send to server and save
+			printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
+
 			break;
 
 		case 4: // leave list
@@ -474,7 +480,9 @@ int main(int argc, char *argv[])
 			scanf("%s", data.listName);
 			strcpy(data.contactName, clientName); // Using client bound name
 
-			sendStruct(sock, echoServAddr, data);
+			data = sendStruct(sock, echoServAddr, data); // send to server and save
+			printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
+
 			break;
 
 		case 5: // exit messaging
@@ -483,7 +491,8 @@ int main(int argc, char *argv[])
 
 			strcpy(data.contactName, clientName); // Using client bound name
 
-			data = sendStruct(sock, echoServAddr, data);
+			data = sendStruct(sock, echoServAddr, data); // send to server and save
+			printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
 
 			if(strcmp(data.returnCode, "SUCCESS") == 0)
 			{
@@ -498,13 +507,18 @@ int main(int argc, char *argv[])
 
 			printf("Contact list name: ");
 			strcpy(lastPrint, "Contact list name: ");
-			scanf("%s", data.listName);
+			scanf("%s", listName);
+			strcpy(data.listName, listName);
 			strcpy(data.contactName, clientName); // Using client bound name
 
 			data = sendStruct(sock, echoServAddr, data);
 
-			if(strcmp(data.returnCode, "SUCCESS") != 0 && strcmp(data.returnCode, "FAILURE") != 0)
+			// Check if IM was successfully started
+			if(strcmp(data.returnCode, "FAILURE") != 0)
 			{
+				// Request succeeded
+				printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
+
 				// Convert string to integer
 				int listCount = atoi(data.returnCode);
 
@@ -513,7 +527,7 @@ int main(int argc, char *argv[])
 				{
 					printf("%d: %s   %s   %d\n", i + 1, data.userList[i].contactName, data.userList[i].IP, data.userList[i].port);
 				}
-				printf("\n");
+				printf("\n"); // Spacer
 
 				// Rearranging next contact list
 				// Copy first user to back of list
@@ -560,33 +574,40 @@ int main(int argc, char *argv[])
 				fgets(msg.message, MSG_MAX, stdin); // Read message
 				printf("Sending message... \n");
 
+			    // Send message
 			    msg = sendMsg(clientSock, echoClntAddr, msg);
 			    printf("Server response: %s\n\n", msg.returnCode); // Print the echoed arg
 
-			    close(clientSock);
+			    // Regardless of success or not, server socket closes and client sends im-complete
+				close(clientSock);
+
+				// Unlock contact list
+			    data = initStruct(data);              // Clear data
+			    data.command = 8;                     // im-complete command
+
+			    strcpy(data.listName, listName);      // Using client bound name
+			    strcpy(data.contactName, clientName); // Using client bound name
+			    sendStruct(sock, echoServAddr, data); // send to server
 			}
+			else
+			{
+				// Request failed
+				printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
+			}
+
 			break;
 
-		case 7: // complete IM
-			data.command = 7;
-
-			printf("Contact list name: ");
-			strcpy(lastPrint, "Contact list name: ");
-			scanf("%s", data.listName);
-			strcpy(data.contactName, clientName); // Using client bound name
-
-			sendStruct(sock, echoServAddr, data);
-			break;
-
-		case 8: // save contacts
+		case 7: // save contacts
 			printf("Selected: save\n\n");
-			data.command = 8;
+			data.command = 7;
 
 			printf("File name: ");
 			strcpy(lastPrint, "File name: ");
 			scanf("%s", data.fileName);
 
-			sendStruct(sock, echoServAddr, data);
+			data = sendStruct(sock, echoServAddr, data); // send to server
+			printf("Server response: %s\n\n", data.returnCode); // Print the echoed arg
+
 			break;
 
 		default:
